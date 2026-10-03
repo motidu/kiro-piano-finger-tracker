@@ -510,6 +510,11 @@ class RangeRequestHandler(BaseHTTPRequestHandler):
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
+    # UTF-8 stdout / stderr 設定（Windows の cp932 環境でヘルプやログの文字化けを防止）
+    if sys.stdout is not None and hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+    if sys.stderr is not None and hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8")
 
     def _port_type(value: str) -> int:
         """argparse 用ポート番号バリデーター。
@@ -518,10 +523,10 @@ if __name__ == "__main__":
             value: コマンドライン引数として渡された文字列
 
         Returns:
-            検証済みの整数ポート番号（1–65535）
+            検証済みの整数ポート番号（1-65535）
 
         Raises:
-            argparse.ArgumentTypeError: 整数でない、または 1–65535 の範囲外の場合
+            argparse.ArgumentTypeError: 整数でない、または 1-65535 の範囲外の場合
 
         Requirements: 5.8
         """
@@ -533,7 +538,7 @@ if __name__ == "__main__":
             )
         if not (1 <= port <= 65535):
             raise argparse.ArgumentTypeError(
-                f"Port must be 1–65535, got: {port}"
+                f"Port must be 1-65535, got: {port}"
             )
         return port
 
@@ -550,7 +555,7 @@ if __name__ == "__main__":
         "-p", "--port",
         type=_port_type,
         default=8090,
-        help="TCPポート番号 1–65535 (default: 8090)",
+        help="TCPポート番号 1-65535 (default: 8090)",
     )
     args = parser.parse_args()
 
@@ -560,10 +565,6 @@ if __name__ == "__main__":
     if not root.exists() or not root.is_dir():
         print(f"Error: '{root}' is not a valid directory.", file=sys.stderr)
         sys.exit(1)
-
-    # UTF-8 stdout 設定
-    # Requirements: 6.3
-    sys.stdout.reconfigure(encoding="utf-8")
 
     # ハンドラーにルートディレクトリを設定
     RangeRequestHandler.root_dir = root
