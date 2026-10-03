@@ -1,0 +1,24 @@
+{
+  "name": "qa-streaming-auditor",
+  "description": "Custom agent specialized in HTTP RFC compliance testing, streaming verification, and Property-Based Testing",
+  "tools": ["read", "write", "shell"],
+  "excludedTools": [],
+  "includeMcpJson": true,
+  "includePowers": true,
+  "resources": [
+    "file://./.kiro/specs/range-http-server/design.md",
+    "file://./.kiro/steering/tech.md"
+  ],
+  "permissions": {
+    "rules": [
+      {
+        "capability": "shell",
+        "match": ["python *", "pytest *"],
+        "effect": "allow"
+      }
+    ]
+  },
+  "prompt": "You are a specialized QA and Performance Auditor for Range HTTP streaming. You verify RFC 7233 Range requests, CORS preflights, chunked transfer behaviors, and ensure all property-based tests in pytest pass without memory spikes.",
+  "model": "claude-sonnet-4.5",
+  "welcomeMessage": "Range HTTP QA Auditor ready. What test suite or compliance check should we run?"
+}

@@ -6,32 +6,24 @@ Developed with [Kiro](https://kiro.dev/) as part of the **Kiro University Challe
 
 ---
 
-## 🚀 Kiro Spec-Driven Development Showcase
+## 🚀 Kiro University Challenge: Complete Syllabus Showcase (Lessons 1–7 + Bonus)
 
-This repository serves as a practical demonstration of **Kiro's Spec-driven workflow**, showing how high-reliability systems can be designed and built from formal requirements to automated testing.
+This repository demonstrates the **entire Kiro Agentic IDE workflow**, fulfilling all seven core lessons and bonus requirements:
 
-### 1. Specs (`.kiro/specs/`) — Lesson 1
-Developed using strict EARS (Easy Approach to Requirements Syntax) notation:
-- **`requirements.md`**: Complete functional requirements for Range parsing, CORS preflight, error responses, and CLI args.
-- **`design.md`**: Architectural breakdown, sequence flows, and formal correctness properties.
-- **`tasks.md`**: Step-by-step implementation tasks directly tied to requirement IDs.
-
-### 2. Steering Documents (`.kiro/steering/`) — Lesson 2
-Guiding AI code generation with project constraints and domain standards:
-- **`tech.md`**: Technical constraints (Python 3.11+, zero external runtime dependencies, Windows/Linux compatibility).
-- **`web-viewer.md`**: Standards for Web Audio API & MediaElementSource integration, CORS requirements, and Canvas 60fps streaming.
-
-### 3. Agent Hooks (`.kiro/hooks/`) — Lesson 3
-Automating quality assurance during coding:
-- **`python-syntax-check.json`**: `PostFileSave` hook that triggers `python -m py_compile` automatically on `.py` edits to prevent syntax regressions.
-
-### 4. Property-Based Testing (PBT) — Lesson 4
-Going beyond example-based tests:
-- Formal correctness properties are validated using `hypothesis` (in `tests/test_range_http_server.py`), exploring hundreds of arbitrary range intervals and edge-case boundary conditions.
+| Lesson / Milestone | Feature | Implementation in this Repository |
+| :--- | :--- | :--- |
+| **Lesson 1** | **Spec-Driven Development** | `.kiro/specs/range-http-server/` with EARS notation (`requirements.md`), architectural diagrams (`design.md`), and granular tasks (`tasks.md`). |
+| **Lesson 2** | **Steering Documents** | `.kiro/steering/` with persistent constraints (`product.md`, `tech.md`, and `web-viewer.md` for CORS/Audio standards). |
+| **Lesson 3** | **Agent Hooks** | `.kiro/hooks/python-syntax-check.json` (`PostFileSave` automatic syntax verification on `.py` edits). |
+| **Lesson 4** | **Property-Based Testing (PBT)** | `tests/test_range_http_server.py` using `hypothesis` to fuzz range boundaries and guarantee correctness invariants. |
+| **Lesson 5** | **Powers** | `.kiro/powers/range-http-power/` bundling skills, MCP, and stream analysis tools. |
+| **Lesson 6** | **Model Context Protocol (MCP)** | `mcp.json` and `.kiro/settings/mcp.json` registering external MCP tool servers. |
+| **Lesson 7** | **Custom Agents** | `.kiro/agents/qa-streaming-auditor.json` defining a specialized QA auditor agent with tailored tools, prompts, and permissions. |
+| **Bonus 2** | **Package a Kiro Power** | Fully packaged Power manifest `plugin.json` under `.kiro/powers/range-http-power/`. |
 
 ---
 
-## ✨ Features
+## ✨ Server Features
 
 - **RFC 7233 / 9110 Compliant Range Requests**:
   - Explicit ranges: `bytes=0-499`
@@ -80,23 +72,27 @@ python -m pytest -v
 ```text
 .
 ├── .kiro/
+│   ├── agents/
+│   │   └── qa-streaming-auditor.json         # Custom Agent config (Lesson 7)
 │   ├── hooks/
-│   │   └── python-syntax-check.json          # Pre/Post save automated hooks
-│   ├── specs/range-http-server/
-│   │   ├── requirements.md                   # EARS requirements
-│   │   ├── design.md                         # Architecture & correctness properties
-│   │   └── tasks.md                          # Implementation tasks
-│   └── steering/
-│       ├── product.md                        # Product vision
-│       ├── tech.md                           # Tech stack constraints
-│       └── web-viewer.md                     # Web viewer & CORS guidelines
+│   │   └── python-syntax-check.json          # Pre/Post save automated hooks (Lesson 3)
+│   ├── powers/
+│   │   └── range-http-power/                 # Packaged Kiro Power (Lesson 5 & Bonus 2)
+│   │       ├── plugin.json                   # Power manifest
+│   │       ├── mcp.json                      # Bundled MCP server
+│   │       └── skills/stream-analyzer/       # Bundled Agent skill
+│   ├── settings/
+│   │   └── mcp.json                          # MCP server configuration (Lesson 6)
+│   ├── specs/range-http-server/              # EARS Specs, Design, Tasks (Lesson 1)
+│   └── steering/                             # Project Context & Constraints (Lesson 2)
+├── mcp.json                                  # Workspace MCP config (Lesson 6)
 ├── range_http_server.py                      # Main HTTP server implementation
 ├── tests/
-│   ├── test_range_http_server.py             # Unit & Property-Based tests (hypothesis)
+│   ├── test_range_http_server.py             # Unit & Property-Based tests (Lesson 4)
 │   └── test_integration.py                   # Live server integration tests
-├── requirements-dev.txt                      # Test dependencies
+├── requirements-dev.txt
 ├── .gitignore
-├── LICENSE                                   # MIT License
+├── LICENSE
 └── README.md
 ```
 

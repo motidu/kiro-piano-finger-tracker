@@ -1,0 +1,18 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "range-http-power",
+  "version": "1.0.0",
+  "description": "Kiro Power providing specialized tools, testing skills, and MCP configurations for zero-dependency HTTP Range streaming and Web Audio development",
+  "author": {
+    "name": "motidu"
+  },
+  "keywords": [
+    "http-server",
+    "range-requests",
+    "video-streaming",
+    "web-audio",
+    "rfc7233",
+    "pbt",
+    "zero-dependency"
+  ]
+}
