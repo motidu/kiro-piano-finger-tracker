@@ -68,6 +68,7 @@ def run_pipeline(
     quad: Tuple[Tuple[float, float], ...] = DEFAULT_QUAD,
     output_path: str | Path = "web/data/ray_notes.json",
     tolerance_sec: float = 0.05,
+    av_offset_sec: float = 0.0,
     title: str = "Piano Finger Tracking",
 ) -> Dict[str, Any]:
     """Execute end-to-end integration pipeline.
@@ -80,6 +81,7 @@ def run_pipeline(
         quad: 4 corner coordinates (TL, TR, BR, BL).
         output_path: Target destination path for ray_notes.json.
         tolerance_sec: Synchronization tolerance in seconds (default 50ms).
+        av_offset_sec: Audio/Video sync offset in seconds (added to vision timestamps).
         title: Meta title for the dataset.
 
     Returns:
@@ -112,6 +114,7 @@ def run_pipeline(
         audio_events=audio_events,
         vision_events=vision_events,
         tolerance_sec=tolerance_sec,
+        av_offset_sec=av_offset_sec,
         title=title,
     )
 
@@ -135,6 +138,7 @@ def main():
     )
     parser.add_argument("--output", type=str, default="web/data/ray_notes.json", help="Path to output JSON")
     parser.add_argument("--tolerance", type=float, default=0.05, help="Time matching tolerance (seconds)")
+    parser.add_argument("--av-offset", type=float, default=0.0, help="A/V sync offset in seconds (added to vision timestamps)")
     parser.add_argument("--title", type=str, default="Piano Finger Tracking", help="Song/Recording title")
 
     args = parser.parse_args()
@@ -153,6 +157,7 @@ def main():
         quad=quad,
         output_path=args.output,
         tolerance_sec=args.tolerance,
+        av_offset_sec=args.av_offset,
         title=args.title,
     )
 

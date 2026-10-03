@@ -8,30 +8,26 @@ from pipeline.integration.json_builder import (
     build_ray_notes,
     save_integrated_json,
     load_integrated_json,
-    _infer_hand,
     _normalize_hand,
 )
 from pipeline.main import run_pipeline, parse_quad_argument
 
 
-def test_infer_hand():
-    """Verify hand inference from MIDI note: < 60 is L, >= 60 is R."""
-    assert _infer_hand(59) == "L"
-    assert _infer_hand(60) == "R"
-    assert _infer_hand(21) == "L"
-    assert _infer_hand(108) == "R"
-
-
 def test_normalize_hand():
-    """Verify hand normalization for int, str, and fallback."""
-    assert _normalize_hand(0, 60) == "L"
-    assert _normalize_hand(1, 60) == "R"
-    assert _normalize_hand("l", 60) == "L"
-    assert _normalize_hand("left", 60) == "L"
-    assert _normalize_hand("r", 60) == "R"
-    assert _normalize_hand("right", 60) == "R"
-    assert _normalize_hand("unknown", 50) == "L"
-    assert _normalize_hand("unknown", 70) == "R"
+    """Verify hand normalization for int, str, and fallback with context."""
+    # Explicit cases
+    assert _normalize_hand(0, 60, 48, 72) == "L"
+    assert _normalize_hand(1, 60, 48, 72) == "R"
+    assert _normalize_hand("l", 60, 48, 72) == "L"
+    assert _normalize_hand("right", 60, 48, 72) == "R"
+    
+    # Fallback cases based on proximity to last_l and last_r
+    # Note 50 is closer to 48 (last_l) than 72 (last_r) -> "L"
+    assert _normalize_hand("unknown", 50, 48, 72) == "L"
+    # Note 70 is closer to 72 (last_r) than 48 (last_l) -> "R"
+    assert _normalize_hand("unknown", 70, 48, 72) == "R"
+    # Note 80, left hand crossed over (last_l = 82, last_r = 50) -> "L"
+    assert _normalize_hand("unknown", 80, 82, 50) == "L"
 
 
 def test_build_ray_notes_matching():
@@ -67,24 +63,55 @@ def test_build_ray_notes_matching():
     assert notes[1]["confidence"] > 0.7
 
 
-def test_build_ray_notes_unmatched_audio_fallback():
-    """Verify that audio note without vision match gets finger=0 and pitch-inferred hand."""
+def test_build_ray_notes_av_offset_and_consumed():
+    """Verify A/V offset is applied and events are correctly consumed."""
     audio_events = [
-        {"note": 48, "start": 0.5, "end": 1.0, "velocity": 80.0},  # Low note -> L
-        {"note": 72, "start": 1.5, "end": 2.0, "velocity": 85.0},  # High note -> R
+        {"note": 60, "start": 1.0, "end": 1.1, "velocity": 90.0},
+        {"note": 60, "start": 1.05, "end": 1.15, "velocity": 90.0}, # Rapid repeat (trill)
     ]
-    vision_events = []  # No vision events
+    # Vision is 0.2s EARLY (timestamp 0.8 instead of 1.0). av_offset_sec=0.2 fixes this.
+    vision_events = [
+        {"note": 60, "finger": 1, "hand": "L", "timestamp": 0.8, "v": 0.9},
+    ]
+
+    # Without offset, it shouldn't match.
+    res_no_offset = build_ray_notes(audio_events, vision_events, tolerance_sec=0.05)
+    assert res_no_offset["notes"][0]["finger"] == 0
+
+    # With offset, the first note should match, the second should NOT (consumed).
+    res = build_ray_notes(audio_events, vision_events, tolerance_sec=0.05, av_offset_sec=0.2)
+    notes = res["notes"]
+    assert notes[0]["finger"] == 1
+    assert notes[0]["confidence"] == 1.0
+    assert notes[1]["finger"] == 0 # Trill protection worked
+
+
+def test_build_ray_notes_unmatched_audio_fallback():
+    """Verify that audio note without vision match uses dynamic context-based hand fallback."""
+    # We will simulate a cross-hand situation
+    audio_events = [
+        # Note 1: Played explicitly by Left Hand high up (cross hand)
+        {"note": 80, "start": 1.0, "end": 1.5, "velocity": 80.0},
+        # Note 2: Unmatched note played shortly after, nearby (Note 82)
+        {"note": 82, "start": 2.0, "end": 2.5, "velocity": 85.0},
+    ]
+    vision_events = [
+        {"note": 80, "finger": 2, "hand": "L", "timestamp": 1.01, "v": 0.8}
+    ]
 
     res = build_ray_notes(audio_events, vision_events, tolerance_sec=0.05)
     notes = res["notes"]
 
     assert len(notes) == 2
-    assert notes[0]["finger"] == 0
+    # First note matched perfectly to Left
+    assert notes[0]["finger"] == 2
     assert notes[0]["hand"] == "L"
-    assert notes[0]["confidence"] == 0.0
-
+    
+    # Second note has NO vision match.
+    # Due to context logic, it should see last Left note was 80, last Right was 72 (default).
+    # 82 is closer to 80 (dist 2) than 72 (dist 10). So it infers "L".
     assert notes[1]["finger"] == 0
-    assert notes[1]["hand"] == "R"
+    assert notes[1]["hand"] == "L"
     assert notes[1]["confidence"] == 0.0
 
 
