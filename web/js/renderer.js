@@ -84,7 +84,7 @@ export class Renderer {
     });
 
     visibleNotes.forEach(n => {
-      const isLeft = n.hand === "L";
+      const isLeft = n.hand === "L" || n.hand === "left" || n.hand === 0 || String(n.hand).toLowerCase() === "left";
       const color = isLeft ? "#3b82f6" : "#ec4899";
       const u = this.midiToU(n.note);
 
