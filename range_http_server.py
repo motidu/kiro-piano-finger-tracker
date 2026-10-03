@@ -164,6 +164,8 @@ def _get_mime_type(path: Path) -> str:
     Requirements: 2.3, 3.1, 3.2–3.10
     """
     ext = path.suffix.lstrip(".").lower()
+    if not ext and path.name.lower() in ("license", "licence"):
+        return "text/plain; charset=utf-8"
     return MIME_MAP.get(ext, "application/octet-stream")
 
 
