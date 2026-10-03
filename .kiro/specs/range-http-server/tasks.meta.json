@@ -1,0 +1,331 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1. プロジェクト構造とコア型の定義": [
+      {
+        "executionId": "ba9df709-65cf-4bfc-a4df-1142818845bc",
+        "chatSessionId": "sess_6bb7d2b3-1251-4190-9537-fecf8d7692a5",
+        "timestamp": 1791014587033
+      },
+      {
+        "executionId": "ba9df709-65cf-4bfc-a4df-1142818845bc",
+        "chatSessionId": "sess_6bb7d2b3-1251-4190-9537-fecf8d7692a5",
+        "timestamp": 1791014594502
+      },
+      {
+        "executionId": "ba9df709-65cf-4bfc-a4df-1142818845bc",
+        "chatSessionId": "sess_6bb7d2b3-1251-4190-9537-fecf8d7692a5",
+        "timestamp": 1791015011265
+      }
+    ],
+    "2.1 `parse_range_header(header: str, file_size: int) -> RangeSpec | None` を実装する": [
+      {
+        "executionId": "ba9df709-65cf-4bfc-a4df-1142818845bc",
+        "chatSessionId": "sess_6bb7d2b3-1251-4190-9537-fecf8d7692a5",
+        "timestamp": 1791014588016
+      },
+      {
+        "executionId": "ba9df709-65cf-4bfc-a4df-1142818845bc",
+        "chatSessionId": "sess_6bb7d2b3-1251-4190-9537-fecf8d7692a5",
+        "timestamp": 1791015017108
+      },
+      {
+        "executionId": "ba9df709-65cf-4bfc-a4df-1142818845bc",
+        "chatSessionId": "sess_6bb7d2b3-1251-4190-9537-fecf8d7692a5",
+        "timestamp": 1791015068862
+      }
+    ],
+    "3.1 `_get_mime_type(path: Path) -> str` を実装する": [
+      {
+        "executionId": "ba9df709-65cf-4bfc-a4df-1142818845bc",
+        "chatSessionId": "sess_6bb7d2b3-1251-4190-9537-fecf8d7692a5",
+        "timestamp": 1791014588132
+      },
+      {
+        "executionId": "ba9df709-65cf-4bfc-a4df-1142818845bc",
+        "chatSessionId": "sess_6bb7d2b3-1251-4190-9537-fecf8d7692a5",
+        "timestamp": 1791015020100
+      },
+      {
+        "executionId": "ba9df709-65cf-4bfc-a4df-1142818845bc",
+        "chatSessionId": "sess_6bb7d2b3-1251-4190-9537-fecf8d7692a5",
+        "timestamp": 1791015071954
+      }
+    ],
+    "4. Checkpoint — ここまでのテストをすべて pass させること": [
+      {
+        "executionId": "ba9df709-65cf-4bfc-a4df-1142818845bc",
+        "chatSessionId": "sess_6bb7d2b3-1251-4190-9537-fecf8d7692a5",
+        "timestamp": 1791014588213
+      },
+      {
+        "executionId": "ba9df709-65cf-4bfc-a4df-1142818845bc",
+        "chatSessionId": "sess_6bb7d2b3-1251-4190-9537-fecf8d7692a5",
+        "timestamp": 1791015084410
+      },
+      {
+        "executionId": "ba9df709-65cf-4bfc-a4df-1142818845bc",
+        "chatSessionId": "sess_6bb7d2b3-1251-4190-9537-fecf8d7692a5",
+        "timestamp": 1791015144559
+      }
+    ],
+    "5.1 `_resolve_path(url_path: str) -> Path | None` を実装する": [
+      {
+        "executionId": "ba9df709-65cf-4bfc-a4df-1142818845bc",
+        "chatSessionId": "sess_6bb7d2b3-1251-4190-9537-fecf8d7692a5",
+        "timestamp": 1791014588363
+      },
+      {
+        "executionId": "ba9df709-65cf-4bfc-a4df-1142818845bc",
+        "chatSessionId": "sess_6bb7d2b3-1251-4190-9537-fecf8d7692a5",
+        "timestamp": 1791015152073
+      },
+      {
+        "executionId": "ba9df709-65cf-4bfc-a4df-1142818845bc",
+        "chatSessionId": "sess_6bb7d2b3-1251-4190-9537-fecf8d7692a5",
+        "timestamp": 1791015492727
+      }
+    ],
+    "5.2 パストラバーサルのユニットテスト（任意）": [
+      {
+        "executionId": "ba9df709-65cf-4bfc-a4df-1142818845bc",
+        "chatSessionId": "sess_6bb7d2b3-1251-4190-9537-fecf8d7692a5",
+        "timestamp": 1791014588486
+      },
+      {
+        "executionId": "ba9df709-65cf-4bfc-a4df-1142818845bc",
+        "chatSessionId": "sess_6bb7d2b3-1251-4190-9537-fecf8d7692a5",
+        "timestamp": 1791015495748
+      },
+      {
+        "executionId": "ba9df709-65cf-4bfc-a4df-1142818845bc",
+        "chatSessionId": "sess_6bb7d2b3-1251-4190-9537-fecf8d7692a5",
+        "timestamp": 1791015535194
+      }
+    ],
+    "5.3 `do_OPTIONS()` を実装する": [
+      {
+        "executionId": "ba9df709-65cf-4bfc-a4df-1142818845bc",
+        "chatSessionId": "sess_6bb7d2b3-1251-4190-9537-fecf8d7692a5",
+        "timestamp": 1791014588548
+      },
+      {
+        "executionId": "ba9df709-65cf-4bfc-a4df-1142818845bc",
+        "chatSessionId": "sess_6bb7d2b3-1251-4190-9537-fecf8d7692a5",
+        "timestamp": 1791015538804
+      },
+      {
+        "executionId": "ba9df709-65cf-4bfc-a4df-1142818845bc",
+        "chatSessionId": "sess_6bb7d2b3-1251-4190-9537-fecf8d7692a5",
+        "timestamp": 1791015578941
+      }
+    ],
+    "5.4 `_send_full_response()` および `_send_partial_response()` を実装する": [
+      {
+        "executionId": "ba9df709-65cf-4bfc-a4df-1142818845bc",
+        "chatSessionId": "sess_6bb7d2b3-1251-4190-9537-fecf8d7692a5",
+        "timestamp": 1791014588628
+      },
+      {
+        "executionId": "ba9df709-65cf-4bfc-a4df-1142818845bc",
+        "chatSessionId": "sess_6bb7d2b3-1251-4190-9537-fecf8d7692a5",
+        "timestamp": 1791015541897
+      },
+      {
+        "executionId": "ba9df709-65cf-4bfc-a4df-1142818845bc",
+        "chatSessionId": "sess_6bb7d2b3-1251-4190-9537-fecf8d7692a5",
+        "timestamp": 1791015617257
+      }
+    ],
+    "5.5 `do_GET()` を実装する（各メソッドの組み合わせ）": [
+      {
+        "executionId": "ba9df709-65cf-4bfc-a4df-1142818845bc",
+        "chatSessionId": "sess_6bb7d2b3-1251-4190-9537-fecf8d7692a5",
+        "timestamp": 1791014588677
+      },
+      {
+        "executionId": "ba9df709-65cf-4bfc-a4df-1142818845bc",
+        "chatSessionId": "sess_6bb7d2b3-1251-4190-9537-fecf8d7692a5",
+        "timestamp": 1791015624187
+      },
+      {
+        "executionId": "ba9df709-65cf-4bfc-a4df-1142818845bc",
+        "chatSessionId": "sess_6bb7d2b3-1251-4190-9537-fecf8d7692a5",
+        "timestamp": 1791015674250
+      }
+    ],
+    "7.1 `__main__` ブロックを実装する": [
+      {
+        "executionId": "ba9df709-65cf-4bfc-a4df-1142818845bc",
+        "chatSessionId": "sess_6bb7d2b3-1251-4190-9537-fecf8d7692a5",
+        "timestamp": 1791014588730
+      },
+      {
+        "executionId": "ba9df709-65cf-4bfc-a4df-1142818845bc",
+        "chatSessionId": "sess_6bb7d2b3-1251-4190-9537-fecf8d7692a5",
+        "timestamp": 1791015677805
+      },
+      {
+        "executionId": "199bd7c4-2e08-46ab-a65b-8e838c940786",
+        "chatSessionId": "sess_2c40588d-dc41-443a-84ad-567f718cfe1c",
+        "timestamp": 1791015758704
+      },
+      {
+        "executionId": "199bd7c4-2e08-46ab-a65b-8e838c940786",
+        "chatSessionId": "sess_2c40588d-dc41-443a-84ad-567f718cfe1c",
+        "timestamp": 1791016370358
+      }
+    ],
+    "9. Final Checkpoint — 全テスト pass・スモークテスト確認": [
+      {
+        "executionId": "ba9df709-65cf-4bfc-a4df-1142818845bc",
+        "chatSessionId": "sess_6bb7d2b3-1251-4190-9537-fecf8d7692a5",
+        "timestamp": 1791014588788
+      },
+      {
+        "executionId": "199bd7c4-2e08-46ab-a65b-8e838c940786",
+        "chatSessionId": "sess_2c40588d-dc41-443a-84ad-567f718cfe1c",
+        "timestamp": 1791015758796
+      },
+      {
+        "executionId": "199bd7c4-2e08-46ab-a65b-8e838c940786",
+        "chatSessionId": "sess_2c40588d-dc41-443a-84ad-567f718cfe1c",
+        "timestamp": 1791020385699
+      },
+      {
+        "executionId": "199bd7c4-2e08-46ab-a65b-8e838c940786",
+        "chatSessionId": "sess_2c40588d-dc41-443a-84ad-567f718cfe1c",
+        "timestamp": 1791020468791
+      }
+    ],
+    "2. `parse_range_header()` の実装とテスト": [
+      {
+        "executionId": "ba9df709-65cf-4bfc-a4df-1142818845bc",
+        "chatSessionId": "sess_6bb7d2b3-1251-4190-9537-fecf8d7692a5",
+        "timestamp": 1791015068978
+      }
+    ],
+    "3. `_get_mime_type()` の実装とテスト": [
+      {
+        "executionId": "ba9df709-65cf-4bfc-a4df-1142818845bc",
+        "chatSessionId": "sess_6bb7d2b3-1251-4190-9537-fecf8d7692a5",
+        "timestamp": 1791015072040
+      }
+    ],
+    "5. `RangeRequestHandler` のパス解決・エラー応答の実装": [
+      {
+        "executionId": "ba9df709-65cf-4bfc-a4df-1142818845bc",
+        "chatSessionId": "sess_6bb7d2b3-1251-4190-9537-fecf8d7692a5",
+        "timestamp": 1791015674331
+      }
+    ],
+    "6.1 Property 3: Content-Range ヘッダーフォーマット整合性": [
+      {
+        "executionId": "199bd7c4-2e08-46ab-a65b-8e838c940786",
+        "chatSessionId": "sess_2c40588d-dc41-443a-84ad-567f718cfe1c",
+        "timestamp": 1791016125104
+      },
+      {
+        "executionId": "199bd7c4-2e08-46ab-a65b-8e838c940786",
+        "chatSessionId": "sess_2c40588d-dc41-443a-84ad-567f718cfe1c",
+        "timestamp": 1791019967408
+      }
+    ],
+    "7. CLI エントリーポイントの実装": [
+      {
+        "executionId": "199bd7c4-2e08-46ab-a65b-8e838c940786",
+        "chatSessionId": "sess_2c40588d-dc41-443a-84ad-567f718cfe1c",
+        "timestamp": 1791016370464
+      }
+    ],
+    "8.1 統合テスト（インプロセス HTTP サーバー）": [
+      {
+        "executionId": "199bd7c4-2e08-46ab-a65b-8e838c940786",
+        "chatSessionId": "sess_2c40588d-dc41-443a-84ad-567f718cfe1c",
+        "timestamp": 1791016383291
+      },
+      {
+        "executionId": "199bd7c4-2e08-46ab-a65b-8e838c940786",
+        "chatSessionId": "sess_2c40588d-dc41-443a-84ad-567f718cfe1c",
+        "timestamp": 1791020344587
+      }
+    ],
+    "2.2 Property 1: Range ヘッダー解析ラウンドトリップ": [
+      {
+        "executionId": "199bd7c4-2e08-46ab-a65b-8e838c940786",
+        "chatSessionId": "sess_2c40588d-dc41-443a-84ad-567f718cfe1c",
+        "timestamp": 1791019850115
+      }
+    ],
+    "2.3 Property 2: オープンエンド Range 展開不変性": [
+      {
+        "executionId": "199bd7c4-2e08-46ab-a65b-8e838c940786",
+        "chatSessionId": "sess_2c40588d-dc41-443a-84ad-567f718cfe1c",
+        "timestamp": 1791019865060
+      }
+    ],
+    "2.4 Property 4: 意味的に無効な Range → RangeNotSatisfiable": [
+      {
+        "executionId": "199bd7c4-2e08-46ab-a65b-8e838c940786",
+        "chatSessionId": "sess_2c40588d-dc41-443a-84ad-567f718cfe1c",
+        "timestamp": 1791019880355
+      }
+    ],
+    "2.5 Property 5: 不正形式 Range → None": [
+      {
+        "executionId": "199bd7c4-2e08-46ab-a65b-8e838c940786",
+        "chatSessionId": "sess_2c40588d-dc41-443a-84ad-567f718cfe1c",
+        "timestamp": 1791019894642
+      }
+    ],
+    "2.6 `parse_range_header()` ユニットテスト": [
+      {
+        "executionId": "199bd7c4-2e08-46ab-a65b-8e838c940786",
+        "chatSessionId": "sess_2c40588d-dc41-443a-84ad-567f718cfe1c",
+        "timestamp": 1791019908991
+      }
+    ],
+    "3.2 Property 6: MIME タイプ ケースインセンシティブ不変性": [
+      {
+        "executionId": "199bd7c4-2e08-46ab-a65b-8e838c940786",
+        "chatSessionId": "sess_2c40588d-dc41-443a-84ad-567f718cfe1c",
+        "timestamp": 1791019928661
+      }
+    ],
+    "3.3 `_get_mime_type()` ユニットテスト": [
+      {
+        "executionId": "199bd7c4-2e08-46ab-a65b-8e838c940786",
+        "chatSessionId": "sess_2c40588d-dc41-443a-84ad-567f718cfe1c",
+        "timestamp": 1791019942933
+      }
+    ],
+    "6. Content-Range フォーマット整合性テスト": [
+      {
+        "executionId": "199bd7c4-2e08-46ab-a65b-8e838c940786",
+        "chatSessionId": "sess_2c40588d-dc41-443a-84ad-567f718cfe1c",
+        "timestamp": 1791019967456
+      }
+    ],
+    "8. HTTP 統合テスト": [
+      {
+        "executionId": "199bd7c4-2e08-46ab-a65b-8e838c940786",
+        "chatSessionId": "sess_2c40588d-dc41-443a-84ad-567f718cfe1c",
+        "timestamp": 1791020344661
+      }
+    ],
+    "8.2 Property 7: CORS ヘッダーユニバーサル付与": [
+      {
+        "executionId": "199bd7c4-2e08-46ab-a65b-8e838c940786",
+        "chatSessionId": "sess_2c40588d-dc41-443a-84ad-567f718cfe1c",
+        "timestamp": 1791020362023
+      }
+    ],
+    "8.3 Property 8: バイナリファイルラウンドトリップ整合性": [
+      {
+        "executionId": "199bd7c4-2e08-46ab-a65b-8e838c940786",
+        "chatSessionId": "sess_2c40588d-dc41-443a-84ad-567f718cfe1c",
+        "timestamp": 1791020379540
+      }
+    ]
+  }
+}

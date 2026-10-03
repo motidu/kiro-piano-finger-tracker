@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Python Syntax Check",
+      "trigger": "PostFileSave",
+      "action": {
+        "type": "command",
+        "command": "python -m py_compile range_http_server.py"
+      },
+      "description": "Validate Python script syntax automatically whenever a .py file is saved.",
+      "matcher": "\\.py$",
+      "enabled": true
+    }
+  ]
+}
