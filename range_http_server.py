@@ -71,6 +71,8 @@ MIME_MAP: dict[str, str] = {
     "html": "text/html; charset=utf-8",
     "js":   "application/javascript",
     "css":  "text/css",
+    "md":   "text/markdown; charset=utf-8",
+    "txt":  "text/plain; charset=utf-8",
 }
 
 
@@ -376,8 +378,15 @@ class RangeRequestHandler(BaseHTTPRequestHandler):
                 self._send_error_response(403, "403 Forbidden: Access denied.")
                 return
 
-            # 2. ファイル存在確認
-            if not resolved.is_file():
+            # 2. ファイル存在確認（ディレクトリの場合は index.html を探す）
+            if resolved.is_dir():
+                index_candidate = resolved / "index.html"
+                if index_candidate.is_file():
+                    resolved = index_candidate
+                else:
+                    self._send_error_response(404, f"404 Not Found: {url_path}")
+                    return
+            elif not resolved.is_file():
                 self._send_error_response(404, f"404 Not Found: {url_path}")
                 return
 
@@ -442,8 +451,15 @@ class RangeRequestHandler(BaseHTTPRequestHandler):
                 self._send_error_response(403, "403 Forbidden: Access denied.")
                 return
 
-            # 2. ファイル存在確認
-            if not resolved.is_file():
+            # 2. ファイル存在確認（ディレクトリの場合は index.html を探す）
+            if resolved.is_dir():
+                index_candidate = resolved / "index.html"
+                if index_candidate.is_file():
+                    resolved = index_candidate
+                else:
+                    self._send_error_response(404, f"404 Not Found: {url_path}")
+                    return
+            elif not resolved.is_file():
                 self._send_error_response(404, f"404 Not Found: {url_path}")
                 return
 
