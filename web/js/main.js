@@ -11,6 +11,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   const timeLabel = document.getElementById("time-label");
   const statusLabel = document.getElementById("status-text");
 
+  const inputLoadJson = document.getElementById("input-load-json");
+  const inputLoadVideo = document.getElementById("input-load-video");
+  const btnLoadJson = document.getElementById("btn-load-json");
+  const btnLoadVideo = document.getElementById("btn-load-video");
+  const loadedFileBadge = document.getElementById("loaded-file-badge");
+  const dropOverlay = document.getElementById("drop-overlay");
+
   // キャンバスのリサイズ対応
   const resizeCanvas = () => {
     canvas.width = window.innerWidth;
@@ -24,7 +31,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const audioEngine = new AudioEngine();
   let notesData = [];
 
-  // JSON ノートデータの読み込み
+  // JSON ノートデータの初期読み込み
   try {
     const res = await fetch("./data/ray_notes.json");
     if (!res.ok) throw new Error("JSON fetch failed");
@@ -32,8 +39,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     notesData = json.notes || [];
     statusLabel.textContent = `読込完了: ${notesData.length} ノート`;
   } catch (err) {
-    statusLabel.textContent = "ノートデータ読込エラー";
-    console.error(err);
+    statusLabel.textContent = "ノートデータ読込待機中";
+    console.warn("Default notes JSON not loaded:", err);
   }
 
   const renderer = new Renderer(canvas, perspective, notesData);
@@ -43,7 +50,24 @@ document.addEventListener("DOMContentLoaded", async () => {
   let currentTime = 0;
   let lastTimestamp = 0;
   let playedNoteIndices = new Set();
-  const duration = 12.0;
+  let duration = 12.0;
+  let videoEl = null;
+
+  // 再生/一時停止の統一トグル
+  const togglePlay = () => {
+    audioEngine.resume();
+    isPlaying = !isPlaying;
+    playBtn.textContent = isPlaying ? "⏸ 一時停止" : "▶ 再生";
+    playBtn.classList.toggle("active", isPlaying);
+
+    if (videoEl) {
+      if (isPlaying) {
+        videoEl.play().catch(e => console.warn("Video play interrupted:", e));
+      } else {
+        videoEl.pause();
+      }
+    }
+  };
 
   // requestAnimationFrame ループ
   const animate = (timestamp) => {
@@ -52,11 +76,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     lastTimestamp = timestamp;
 
     if (isPlaying) {
-      currentTime += dt;
+      if (videoEl && !videoEl.paused) {
+        currentTime = videoEl.currentTime;
+      } else {
+        currentTime += dt;
+      }
+
       if (currentTime > duration) {
         currentTime = 0;
         playedNoteIndices.clear();
+        if (videoEl) videoEl.currentTime = 0;
       }
+
       timeSlider.value = currentTime;
       timeLabel.textContent = `${currentTime.toFixed(1)}s / ${duration.toFixed(1)}s`;
 
@@ -75,17 +106,23 @@ document.addEventListener("DOMContentLoaded", async () => {
   requestAnimationFrame(animate);
 
   // UI コントロールのイベント設定
-  playBtn.addEventListener("click", () => {
-    audioEngine.resume();
-    isPlaying = !isPlaying;
-    playBtn.textContent = isPlaying ? "⏸ 一時停止" : "▶ 再生";
-    playBtn.classList.toggle("active", isPlaying);
+  playBtn.addEventListener("click", togglePlay);
+
+  // スペースキーでの再生/一時停止ショートカット
+  window.addEventListener("keydown", (e) => {
+    if (e.code === "Space" && e.target.tagName !== "INPUT") {
+      e.preventDefault();
+      togglePlay();
+    }
   });
 
   timeSlider.addEventListener("input", (e) => {
     currentTime = parseFloat(e.target.value);
     playedNoteIndices.clear();
     timeLabel.textContent = `${currentTime.toFixed(1)}s / ${duration.toFixed(1)}s`;
+    if (videoEl) {
+      videoEl.currentTime = currentTime;
+    }
   });
 
   calibBtn.addEventListener("click", () => {
@@ -102,7 +139,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const mx = (e.clientX - rect.left) / canvas.width;
     const my = (e.clientY - rect.top) / canvas.height;
 
-    // 最寄りのピンを検索
     for (const [key, pt] of Object.entries(perspective.points)) {
       const dist = Math.hypot(pt.x - mx, pt.y - my);
       if (dist < 0.05) {
@@ -122,5 +158,118 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   window.addEventListener("mouseup", () => {
     activePin = null;
+  });
+
+  // 動的 JSON ファイル読み込み処理
+  function handleJsonFile(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const json = JSON.parse(e.target.result);
+        if (!json.notes || !Array.isArray(json.notes)) {
+          statusLabel.textContent = "JSON形式エラー: notes配列がありません";
+          return;
+        }
+        notesData = json.notes;
+        renderer.notes = notesData;
+
+        // 再生時間の更新
+        const maxEnd = notesData.length > 0 ? Math.max(...notesData.map(n => n.end)) : 12.0;
+        duration = json.meta?.duration_sec || maxEnd || 12.0;
+        timeSlider.max = duration;
+        currentTime = 0;
+        playedNoteIndices.clear();
+        timeSlider.value = 0;
+        timeLabel.textContent = `0.0s / ${duration.toFixed(1)}s`;
+        statusLabel.textContent = `読込完了: ${notesData.length} ノート`;
+        loadedFileBadge.textContent = file.name;
+
+        if (videoEl) videoEl.currentTime = 0;
+      } catch (err) {
+        statusLabel.textContent = "JSON解析エラー";
+        console.error(err);
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // 動的 動画ファイル読み込み処理
+  function handleVideoFile(file) {
+    const url = URL.createObjectURL(file);
+    if (!videoEl) {
+      videoEl = document.createElement("video");
+      videoEl.id = "bg-video";
+      videoEl.style.position = "absolute";
+      videoEl.style.top = "0";
+      videoEl.style.left = "0";
+      videoEl.style.width = "100%";
+      videoEl.style.height = "100%";
+      videoEl.style.objectFit = "cover";
+      videoEl.style.zIndex = "0";
+      videoEl.style.opacity = "0.45";
+      videoEl.playsInline = true;
+      document.getElementById("canvas-container").prepend(videoEl);
+    }
+    videoEl.src = url;
+    loadedFileBadge.textContent = file.name;
+    statusLabel.textContent = `動画セット: ${file.name}`;
+
+    videoEl.addEventListener("loadedmetadata", () => {
+      if (videoEl.duration && !isNaN(videoEl.duration)) {
+        duration = videoEl.duration;
+        timeSlider.max = duration;
+        timeLabel.textContent = `${currentTime.toFixed(1)}s / ${duration.toFixed(1)}s`;
+      }
+    });
+
+    if (isPlaying) {
+      videoEl.play().catch(e => console.warn("Autoplay blocked:", e));
+    }
+  }
+
+  // ボタンクリックハンドラー
+  btnLoadJson.addEventListener("click", () => {
+    inputLoadJson.click();
+  });
+
+  btnLoadVideo.addEventListener("click", () => {
+    inputLoadVideo.click();
+  });
+
+  inputLoadJson.addEventListener("change", (e) => {
+    if (e.target.files[0]) handleJsonFile(e.target.files[0]);
+    e.target.value = "";
+  });
+
+  inputLoadVideo.addEventListener("change", (e) => {
+    if (e.target.files[0]) handleVideoFile(e.target.files[0]);
+    e.target.value = "";
+  });
+
+  // ドラッグ＆ドロップハンドラー
+  window.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    dropOverlay.classList.add("active");
+  });
+
+  window.addEventListener("dragleave", (e) => {
+    if (e.clientX <= 0 || e.clientY <= 0 || e.clientX >= window.innerWidth || e.clientY >= window.innerHeight) {
+      dropOverlay.classList.remove("active");
+    }
+  });
+
+  window.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dropOverlay.classList.remove("active");
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      for (const file of files) {
+        if (file.name.endsWith(".json")) {
+          handleJsonFile(file);
+        } else if (file.type.startsWith("video/") || file.name.match(/\.(mp4|webm|mov|mkv)$/i)) {
+          handleVideoFile(file);
+        }
+      }
+    }
   });
 });

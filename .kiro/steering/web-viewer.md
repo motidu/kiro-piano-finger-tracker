@@ -26,3 +26,11 @@ fileMatchPattern: ["**/*.html", "**/*.js", "**/range_http_server.py"]
 ## 3. Data Architecture Rules
 - **Zero-Inline Bloat**:
   - 数千音に及ぶ MIDI/採譜データ（notes JSON）は HTML/JS 内にインラインでハードコードせず、必ず外部 JSON（`ray_notes.json`）から非同期 `fetch` で読み込む構成を維持すること。
+## 4. Dynamic File Ingestion Rules (JSON & Video)
+- **Local File Selection & Drag-and-Drop**:
+  - The Web Viewer MUST support loading arbitrary local note JSON files via both an explicit file input button and drag-and-drop onto the window.
+  - The Web Viewer MUST support loading arbitrary local performance video files (MP4/WebM) via an explicit file input button and drag-and-drop.
+- **Client-Side Binding & Zero-Reload Switch**:
+  - When a video file is loaded, create an object URL with URL.createObjectURL(file) and attach it to the background <video> element, automatically synchronizing duration and timeline sliders.
+  - When a JSON file is loaded, parse it with FileReader.readAsText, validate the notes schema, reset active playback, update total duration, and immediately reflect the new notes in the Canvas renderer.
+  - The application MUST maintain responsive visual feedback (e.g. drop-zone highlight state and loaded file status labels).
