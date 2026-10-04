@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import math
+import sys
 from pathlib import Path
 from typing import TypedDict
 
@@ -88,8 +89,120 @@ def parse_raw_events(raw: list[dict]) -> list[NoteEvent]:
     return events
 
 
+def parse_midi_file(midi_path: str | Path) -> list[NoteEvent]:
+    """Parse a Standard MIDI File (.mid) into normalized NoteEvent list.
+
+    Args:
+        midi_path: Path to the .mid file.
+
+    Returns:
+        List of NoteEvent dicts sorted by start time.
+    """
+    midi_path = Path(midi_path)
+    if not midi_path.exists():
+        raise FileNotFoundError(f"MIDI file not found: {midi_path}")
+
+    try:
+        import mido
+        return _parse_midi_with_mido(mido, midi_path)
+    except ImportError:
+        venv_py = Path(r"G:\Dev\piano_transcription_mixed\.venv\Scripts\python.exe")
+        if venv_py.exists():
+            return _parse_midi_via_subshell(midi_path, venv_py)
+        print("[Warning] mido not available in current Python. Cannot parse binary MIDI.", file=sys.stderr)
+        return []
+
+
+def _parse_midi_with_mido(mido_mod, midi_path: Path) -> list[NoteEvent]:
+    """Parse MIDI file using mido library with accurate timing."""
+    mid = mido_mod.MidiFile(str(midi_path))
+    events: list[NoteEvent] = []
+
+    # Active notes: note -> (start_sec, velocity)
+    active_notes: dict[int, tuple[float, float]] = {}
+    current_time = 0.0
+
+    # mido's iterate iterates in absolute real-time seconds!
+    for msg in mid:
+        current_time += msg.time
+        if msg.type == "note_on" and msg.velocity > 0:
+            note = msg.note
+            if MIN_NOTE <= note <= MAX_NOTE:
+                active_notes[note] = (current_time, float(msg.velocity))
+        elif msg.type == "note_off" or (msg.type == "note_on" and msg.velocity == 0):
+            note = msg.note
+            if note in active_notes:
+                start_sec, vel = active_notes.pop(note)
+                end_sec = current_time
+                if end_sec <= start_sec:
+                    end_sec = start_sec + 0.05
+                events.append(NoteEvent(
+                    note=note,
+                    start=round(start_sec, 4),
+                    end=round(end_sec, 4),
+                    velocity=round(vel, 2),
+                ))
+
+    # Close any still active notes
+    for note, (start_sec, vel) in active_notes.items():
+        events.append(NoteEvent(
+            note=note,
+            start=round(start_sec, 4),
+            end=round(start_sec + 0.2, 4),
+            velocity=round(vel, 2),
+        ))
+
+    events.sort(key=lambda e: (e["start"], e["note"]))
+    return events
+
+
+def _parse_midi_via_subshell(midi_path: Path, venv_python: Path) -> list[NoteEvent]:
+    """Delegate MIDI parsing to .venv Python where mido is installed."""
+    import subprocess
+    import tempfile
+
+    tmp_out = Path(tempfile.mktemp(suffix=".json"))
+    script_content = f"""
+import json, mido
+mid = mido.MidiFile(r"{midi_path}")
+events = []
+active = {{}}
+t = 0.0
+for msg in mid:
+    t += msg.time
+    if msg.type == 'note_on' and msg.velocity > 0:
+        if 21 <= msg.note <= 108:
+            active[msg.note] = (t, float(msg.velocity))
+    elif msg.type == 'note_off' or (msg.type == 'note_on' and msg.velocity == 0):
+        if msg.note in active:
+            st, vel = active.pop(msg.note)
+            ed = max(t, st + 0.05)
+            events.append({{'note': msg.note, 'start': round(st, 4), 'end': round(ed, 4), 'velocity': round(vel, 2)}})
+
+for note, (st, vel) in active.items():
+    events.append({{'note': note, 'start': round(st, 4), 'end': round(st + 0.2, 4), 'velocity': round(vel, 2)}})
+
+events.sort(key=lambda e: (e['start'], e['note']))
+with open(r"{tmp_out}", "w", encoding="utf-8") as f:
+    json.dump(events, f)
+"""
+    cmd = [str(venv_python), "-c", script_content]
+    try:
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+        if res.returncode == 0 and tmp_out.exists():
+            with open(tmp_out, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            tmp_out.unlink(missing_ok=True)
+            return data
+    except Exception as e:
+        print(f"[Warning] Subshell MIDI parsing failed ({e}).", file=sys.stderr)
+    finally:
+        tmp_out.unlink(missing_ok=True)
+    return []
+
+
 def save_ray_notes(events: list[NoteEvent], path: str | Path) -> None:
-    """HTMLビューア用の JSON ファイルとして保存する。"""
+    """HTMLビューアー用 JSON ファイルとして保存する。"""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:

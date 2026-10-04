@@ -3,6 +3,7 @@ from pathlib import Path
 from pipeline.audio.midi_parser import (
     freq_to_midi,
     parse_raw_events,
+    parse_midi_file,
     save_ray_notes,
     load_ray_notes,
     MIN_NOTE,
@@ -10,14 +11,14 @@ from pipeline.audio.midi_parser import (
 )
 
 def test_freq_to_midi():
-    """周波数から MIDI ノート番号への変換精度を検証"""
+    """周波数から MIDI ノート番号への変換精度"""
     assert freq_to_midi(440.0) == 69  # A4 = 440Hz
     assert freq_to_midi(261.63) == 60 # C4 (Middle C) ≈ 261.63Hz
     assert freq_to_midi(27.5) == 21   # A0 (Lowest key) = 27.5Hz
     assert freq_to_midi(4186.01) == 108 # C8 (Highest key) ≈ 4186.01Hz
 
 def test_parse_raw_events_clamping_and_sorting():
-    """88鍵の範囲外除外と、開始時間順のソートを検証"""
+    """88鍵の範囲外除外と、開始時間順のソート"""
     raw = [
         {"note": 64, "start": 1.5, "end": 2.0},
         {"note": 60, "start": 0.5, "end": 1.0},
@@ -37,7 +38,7 @@ def test_parse_raw_events_clamping_and_sorting():
     assert events[2]["start"] == 1.5
 
 def test_save_and_load_ray_notes(tmp_path):
-    """JSON 保存と再読込の整合性を検証"""
+    """JSON 保存と再読込の整合性"""
     sample = [
         {"note": 60, "start": 0.5, "end": 1.0, "velocity": 100.0},
         {"note": 64, "start": 1.0, "end": 1.5, "velocity": 90.0},
@@ -50,3 +51,13 @@ def test_save_and_load_ray_notes(tmp_path):
     assert len(loaded) == 2
     assert loaded[0]["note"] == 60
     assert loaded[1]["note"] == 64
+
+def test_parse_real_midi_file():
+    """実際の .mid バイナリファイルを解析して NoteEvent リストを取得できるか検証"""
+    sample_midi = Path(__file__).parent / "fixtures" / "sample.mid"
+    assert sample_midi.exists(), "Sample MIDI fixture must exist"
+
+    notes = parse_midi_file(sample_midi)
+    assert len(notes) > 0
+    assert all(MIN_NOTE <= n["note"] <= MAX_NOTE for n in notes)
+    assert all(n["start"] >= 0 and n["end"] >= n["start"] for n in notes)
