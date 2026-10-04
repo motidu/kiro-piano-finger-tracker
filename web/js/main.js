@@ -258,6 +258,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       videoEl.style.objectFit = "cover";
       videoEl.style.zIndex = "0";
       videoEl.style.opacity = "0.45";
+      videoEl.style.pointerEvents = "none";
       videoEl.playsInline = true;
       document.getElementById("canvas-container").prepend(videoEl);
     }
