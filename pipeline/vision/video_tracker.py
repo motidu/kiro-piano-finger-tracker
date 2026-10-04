@@ -36,6 +36,7 @@ def extract_hands_from_video(
     max_hands: int = 2,
     min_detection_confidence: float = 0.5,
     min_tracking_confidence: float = 0.5,
+    mirror_handedness: bool = False,
 ) -> List[Dict[str, Any]]:
     """Extract hand landmarks from a video file using MediaPipe HandLandmarker.
 
@@ -45,6 +46,7 @@ def extract_hands_from_video(
         max_hands: Maximum number of hands to detect per frame.
         min_detection_confidence: Minimum confidence for hand detection.
         min_tracking_confidence: Minimum confidence for hand tracking.
+        mirror_handedness: If True, swap hand_id 0<->1 for non-selfie footage.
 
     Returns:
         List of hand dicts, each containing:
@@ -66,7 +68,7 @@ def extract_hands_from_video(
         # Check if the piano_transcription_mixed .venv python is available with mediapipe
         venv_py = Path(r"G:\Dev\piano_transcription_mixed\.venv\Scripts\python.exe")
         if venv_py.exists():
-            return _extract_hands_via_subshell(video_path, model_path, venv_py)
+            return _extract_hands_via_subshell(video_path, model_path, venv_py, mirror_handedness)
         print(f"[Warning] cv2/mediapipe not available in current Python ({e}).", file=sys.stderr)
         return []
 
@@ -140,6 +142,10 @@ def extract_hands_from_video(
                     if label.lower() == "right":
                         hand_id = 1
 
+                # Apply mirror correction if requested
+                if mirror_handedness:
+                    hand_id = 1 - hand_id
+
                 pts = [(lm.x, lm.y) for lm in landmarks]
 
                 fingers = []
@@ -172,6 +178,7 @@ def _extract_hands_via_subshell(
     video_path: Path,
     model_path: Path,
     venv_python: Path,
+    mirror_handedness: bool = False,
 ) -> List[Dict[str, Any]]:
     """Delegate extraction to the .venv Python where cv2 and mediapipe are installed."""
     import json
@@ -183,7 +190,7 @@ def _extract_hands_via_subshell(
 import json, sys
 from pipeline.vision.video_tracker import extract_hands_from_video
 
-results = extract_hands_from_video(r"{video_path}", r"{model_path}")
+results = extract_hands_from_video(r"{video_path}", r"{model_path}", mirror_handedness={mirror_handedness})
 with open(r"{tmp_out}", "w", encoding="utf-8") as f:
     json.dump(results, f)
 """

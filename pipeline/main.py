@@ -73,6 +73,7 @@ def run_pipeline(
     tolerance_sec: float = 0.05,
     av_offset_sec: float = 0.0,
     title: str = "Piano Finger Tracking",
+    mirror_handedness: bool = False,
 ) -> Dict[str, Any]:
     """Execute end-to-end integration pipeline.
 
@@ -87,6 +88,7 @@ def run_pipeline(
         tolerance_sec: Synchronization tolerance in seconds (default 50ms).
         av_offset_sec: Audio/Video sync offset in seconds (added to vision timestamps).
         title: Meta title for the dataset.
+        mirror_handedness: Swap hand_id 0<->1 for non-selfie footage.
 
     Returns:
         Resulting ray_notes dictionary.
@@ -114,7 +116,10 @@ def run_pipeline(
     if hands_data is None:
         if video_path is not None and Path(video_path).exists():
             print(f"[Info] Extracting hand landmarks from video: {video_path}")
-            hands_data = extract_hands_from_video(video_path)
+            hands_data = extract_hands_from_video(
+                video_path,
+                mirror_handedness=mirror_handedness,
+            )
             print(f"[Info] Extracted {len(hands_data)} hand frame records.")
         else:
             hands_data = []
@@ -122,6 +127,9 @@ def run_pipeline(
     vision_mapper = FingerKeyMapper(quad)
     vision_events = vision_mapper.map_fingers_to_keys(hands_data, quad)
     print(f"[Info] Mapped {len(vision_events)} fingertip hit events.")
+    
+    wrist_events = vision_mapper.map_wrists(hands_data, quad)
+    print(f"[Info] Mapped {len(wrist_events)} wrist samples.")
 
     # 3. Integrate & Merge
     integrated_data = build_ray_notes(
@@ -130,6 +138,7 @@ def run_pipeline(
         tolerance_sec=tolerance_sec,
         av_offset_sec=av_offset_sec,
         title=title,
+        wrist_events=wrist_events,
     )
 
     # 4. Save output
@@ -156,6 +165,7 @@ def main():
     parser.add_argument("--tolerance", type=float, default=0.05, help="Time matching tolerance (seconds)")
     parser.add_argument("--av-offset", type=float, default=0.0, help="A/V sync offset in seconds")
     parser.add_argument("--title", type=str, default="Piano Finger Tracking", help="Song/Recording title")
+    parser.add_argument("--mirror", action="store_true", help="Swap hand_id 0<->1 for non-selfie footage")
 
     args = parser.parse_args()
 
@@ -176,6 +186,7 @@ def main():
         tolerance_sec=args.tolerance,
         av_offset_sec=args.av_offset,
         title=args.title,
+        mirror_handedness=args.mirror,
     )
 
     print(f"Pipeline finished: {len(result['notes'])} notes processed.")

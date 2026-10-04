@@ -41,6 +41,42 @@
         <div class="legend-item"><div class="legend-dot left"></div>左手 (L)</div>
         <div class="legend-item"><div class="legend-dot right"></div>右手 (R)</div>
       </div>
+
+      <!-- Audio Mixer Section -->
+      <div class="mixer-section">
+        <div class="mixer-header">
+          <span>🔊 オーディオミキサー</span>
+        </div>
+        <div class="mixer-presets">
+          <button class="preset-btn active" id="preset-lr">L:動画 / R:MIDI</button>
+          <button class="preset-btn" id="preset-mono">中央Mono</button>
+          <button class="preset-btn" id="preset-video">動画のみ</button>
+          <button class="preset-btn" id="preset-midi">MIDIのみ</button>
+        </div>
+        <div class="mixer-sliders">
+          <div class="slider-row">
+            <label>動画Vol</label>
+            <input type="range" id="slider-video-vol" min="0" max="1.5" step="0.05" value="1.0">
+            <span class="slider-value" id="val-video-vol">1.00</span>
+          </div>
+          <div class="slider-row">
+            <label>MIDIVol</label>
+            <input type="range" id="slider-synth-vol" min="0" max="1.5" step="0.05" value="1.0">
+            <span class="slider-value" id="val-synth-vol">1.00</span>
+          </div>
+          <div class="slider-row">
+            <label>動画Pan</label>
+            <input type="range" id="slider-video-pan" min="-1" max="1" step="0.05" value="-0.8">
+            <span class="slider-value" id="val-video-pan">-0.80</span>
+          </div>
+          <div class="slider-row">
+            <label>MIDIPan</label>
+            <input type="range" id="slider-synth-pan" min="-1" max="1" step="0.05" value="0.8">
+            <span class="slider-value" id="val-synth-pan">0.80</span>
+          </div>
+        </div>
+      </div>
+
       <div id="loaded-file-badge" class="badge-status">ray_notes.json</div>
     </div>
   </div>

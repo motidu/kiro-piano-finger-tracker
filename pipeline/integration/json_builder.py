@@ -7,8 +7,11 @@ Merges normalized audio notes (from midi_parser) with vision finger mappings
 from __future__ import annotations
 
 import json
+import bisect
 from pathlib import Path
 from typing import TypedDict
+
+from pipeline.vision.key_geometry import note_to_u
 
 
 class NoteEvent(TypedDict):
@@ -35,6 +38,7 @@ class IntegratedNote(TypedDict):
     hand: str
     velocity: float
     confidence: float
+    hand_source: str
 
 
 def _normalize_hand(hand_val: int | str, note: int, last_l: int, last_r: int) -> str:
@@ -52,12 +56,69 @@ def _normalize_hand(hand_val: int | str, note: int, last_l: int, last_r: int) ->
     return "L" if abs(note - last_l) <= abs(note - last_r) else "R"
 
 
+def interpolate_wrist_u(wrist_events: list[dict], hand_id: int, t: float, max_gap_sec: float = 1.0, av_offset_sec: float = 0.0) -> float | None:
+    """Interpolate wrist u coordinate for a given hand_id at time t.
+    
+    Uses bisect on pre-sorted per-hand list. Returns None if nearest sample
+    is farther than max_gap_sec.
+    """
+    # Filter events for the specific hand_id
+    hand_events = [e for e in wrist_events if e["hand_id"] == hand_id]
+    if not hand_events:
+        return None
+    
+    # Apply av_offset_sec to timestamps
+    adjusted_events = [(e["timestamp"] + av_offset_sec, e["u"]) for e in hand_events]
+    # Sort by timestamp (assumed pre-sorted in most cases, but ensure)
+    adjusted_events.sort(key=lambda x: x[0])
+    
+    timestamps = [e[0] for e in adjusted_events]
+    
+    # Find insertion point
+    idx = bisect.bisect_left(timestamps, t)
+    
+    # Check nearest sample distance
+    candidates = []
+    if idx < len(adjusted_events):
+        candidates.append((adjusted_events[idx][0], adjusted_events[idx][1]))
+    if idx > 0:
+        candidates.append((adjusted_events[idx-1][0], adjusted_events[idx-1][1]))
+    
+    if not candidates:
+        return None
+        
+    # Find closest in time
+    closest = min(candidates, key=lambda c: abs(c[0] - t))
+    
+    if abs(closest[0] - t) > max_gap_sec:
+        return None
+    
+    # Linear interpolation between prev and next
+    if idx < len(adjusted_events) and idx > 0:
+        prev_t, prev_u = adjusted_events[idx-1]
+        next_t, next_u = adjusted_events[idx]
+        
+        # Clamp to nearest sample if outside range (handled by candidates above, 
+        # but for interpolation logic inside range):
+        if prev_t <= t <= next_t:
+            if next_t == prev_t:
+                return prev_u
+            ratio = (t - prev_t) / (next_t - prev_t)
+            return prev_u + ratio * (next_u - prev_u)
+        
+    # If closest is outside the bracketing pair (e.g. t < first or t > last), 
+    # the 'candidates' logic above picks the single nearest.
+    # If t is exactly on a sample, return it.
+    return closest[1]
+
+
 def build_ray_notes(
     audio_events: list[dict],
     vision_events: list[dict],
     tolerance_sec: float = 0.05,
     av_offset_sec: float = 0.0,
     title: str = "Integrated Piano Notes",
+    wrist_events: list[dict] | None = None,
 ) -> dict:
     """Merge audio NoteEvents with vision finger events into unified JSON structure.
 
@@ -67,6 +128,7 @@ def build_ray_notes(
         tolerance_sec: Time matching tolerance in seconds (default 0.05 = 50ms).
         av_offset_sec: Audio/Video sync offset (added to vision timestamp).
         title: Meta title string.
+        wrist_events: Optional list of wrist position events for hand assignment.
 
     Returns:
         Dictionary matching web/data/ray_notes.json schema.
@@ -123,13 +185,72 @@ def build_ray_notes(
             adj_ts = float(best_vision["timestamp"]) + av_offset_sec
             time_diff = abs(adj_ts - start)
             confidence = max(0.0, 1.0 - (time_diff / tolerance_sec))
+            hand_source = "vision"
         else:
             finger = 0
-            # Context-aware fallback: assign to the hand closest to its last known position
-            dist_l = abs(note - last_l_note)
-            dist_r = abs(note - last_r_note)
-            hand = "L" if dist_l <= dist_r else "R"
+            # Determine hand using wrist events if available
+            hand = None
+            hand_source = "proximity"
             confidence = 0.0
+            
+            if wrist_events:
+                u_note = note_to_u(note)
+                u_left = interpolate_wrist_u(wrist_events, 0, start, max_gap_sec=1.0, av_offset_sec=av_offset_sec)
+                u_right = interpolate_wrist_u(wrist_events, 1, start, max_gap_sec=1.0, av_offset_sec=av_offset_sec)
+                
+                if u_left is not None and u_right is not None:
+                    dist_l = abs(u_note - u_left)
+                    dist_r = abs(u_note - u_right)
+                    if dist_l < dist_r:
+                        hand = "L"
+                        hand_source = "wrist"
+                        confidence = 0.25
+                    elif dist_r < dist_l:
+                        hand = "R"
+                        hand_source = "wrist"
+                        confidence = 0.25
+                    else:
+                        # Tie: keep previous-note proximity rule
+                        dist_l_note = abs(note - last_l_note)
+                        dist_r_note = abs(note - last_r_note)
+                        hand = "L" if dist_l_note <= dist_r_note else "R"
+                        hand_source = "proximity"
+                elif u_left is not None:
+                    dist = abs(u_note - u_left)
+                    if dist <= 0.35:
+                        hand = "L"
+                        hand_source = "wrist"
+                        confidence = 0.25
+                    else:
+                        # Fall back to proximity
+                        dist_l_note = abs(note - last_l_note)
+                        dist_r_note = abs(note - last_r_note)
+                        hand = "L" if dist_l_note <= dist_r_note else "R"
+                        hand_source = "proximity"
+                elif u_right is not None:
+                    dist = abs(u_note - u_right)
+                    if dist <= 0.35:
+                        hand = "R"
+                        hand_source = "wrist"
+                        confidence = 0.25
+                    else:
+                        # Fall back to proximity
+                        dist_l_note = abs(note - last_l_note)
+                        dist_r_note = abs(note - last_r_note)
+                        hand = "L" if dist_l_note <= dist_r_note else "R"
+                        hand_source = "proximity"
+                else:
+                    # No wrists available, use proximity
+                    dist_l_note = abs(note - last_l_note)
+                    dist_r_note = abs(note - last_r_note)
+                    hand = "L" if dist_l_note <= dist_r_note else "R"
+                    hand_source = "proximity"
+            else:
+                # No wrist events, use proximity
+                dist_l_note = abs(note - last_l_note)
+                dist_r_note = abs(note - last_r_note)
+                hand = "L" if dist_l_note <= dist_r_note else "R"
+                hand_source = "proximity"
 
         # Update dynamic hand positions
         if hand == "L":
@@ -145,6 +266,7 @@ def build_ray_notes(
             hand=hand,
             velocity=round(velocity, 2),
             confidence=round(confidence, 4),
+            hand_source=hand_source,
         ))
 
     # Compute duration

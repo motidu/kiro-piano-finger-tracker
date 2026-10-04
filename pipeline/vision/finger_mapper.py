@@ -1,5 +1,6 @@
 import math
 from typing import List, Tuple, Dict
+from pipeline.vision.key_geometry import u_to_note
 
 class FingerKeyMapper:
     """Maps finger positions to piano keys based on a quadrilateral bounding box (Zero-Dependency)."""
@@ -69,8 +70,6 @@ class FingerKeyMapper:
             self.quad = list(quad)
 
         results = []
-        min_midi = 21
-        max_midi = 108
 
         for hand_data in hands:
             hand_id = hand_data.get('hand_id', 0)
@@ -83,8 +82,8 @@ class FingerKeyMapper:
 
                 u, v = self._solve_bilinear(x, y)
 
-                midi_note = int(round(min_midi + u * (max_midi - min_midi)))
-                midi_note = max(min_midi, min(max_midi, midi_note))
+                # Use key_geometry to map u, v to MIDI note
+                midi_note = u_to_note(u, v)
 
                 results.append({
                     'timestamp': hand_data.get('timestamp', 0.0),
@@ -94,5 +93,36 @@ class FingerKeyMapper:
                     'u': round(u, 4),
                     'v': round(v, 4)
                 })
+
+        return results
+
+    def map_wrists(self, hands: List[Dict], quad: Tuple = None) -> List[Dict]:
+        """
+        Map wrist positions to u, v coordinates.
+        """
+        if quad is not None:
+            self.quad = list(quad)
+
+        results = []
+
+        for hand_data in hands:
+            hand_id = hand_data.get('hand_id', 0)
+            landmarks = hand_data.get('landmarks', [])
+            
+            if not landmarks:
+                continue
+            
+            # Landmarks[0] is the wrist
+            wrist = landmarks[0]
+            x, y = wrist[0], wrist[1]
+            
+            u, v = self._solve_bilinear(x, y)
+            
+            results.append({
+                'timestamp': hand_data.get('timestamp', 0.0),
+                'hand_id': hand_id,
+                'u': round(u, 4),
+                'v': round(v, 4)
+            })
 
         return results

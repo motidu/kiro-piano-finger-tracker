@@ -21,6 +21,22 @@ document.addEventListener("DOMContentLoaded", async () => {
   const loadedFileBadge = document.getElementById("loaded-file-badge");
   const dropOverlay = document.getElementById("drop-overlay");
 
+  // Mixer UI Elements
+  const presetLr = document.getElementById("preset-lr");
+  const presetMono = document.getElementById("preset-mono");
+  const presetVideo = document.getElementById("preset-video");
+  const presetMidi = document.getElementById("preset-midi");
+
+  const sliderVideoVol = document.getElementById("slider-video-vol");
+  const sliderSynthVol = document.getElementById("slider-synth-vol");
+  const sliderVideoPan = document.getElementById("slider-video-pan");
+  const sliderSynthPan = document.getElementById("slider-synth-pan");
+
+  const valVideoVol = document.getElementById("val-video-vol");
+  const valSynthVol = document.getElementById("val-synth-vol");
+  const valVideoPan = document.getElementById("val-video-pan");
+  const valSynthPan = document.getElementById("val-synth-pan");
+
   // キャンバスのリサイズ対応
   const resizeCanvas = () => {
     canvas.width = window.innerWidth;
@@ -55,6 +71,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   let playedNoteIndices = new Set();
   let duration = 12.0;
   let videoEl = null;
+
+  // Mixer State
+  let currentVideoPan = -0.8;
+  let currentSynthPan = 0.8;
 
   // 再生/一時停止の統一トグル
   const togglePlay = () => {
@@ -214,6 +234,71 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+  // Mixer Logic
+  const updateMixerUI = () => {
+    valVideoVol.textContent = parseFloat(sliderVideoVol.value).toFixed(2);
+    valSynthVol.textContent = parseFloat(sliderSynthVol.value).toFixed(2);
+    valVideoPan.textContent = parseFloat(sliderVideoPan.value).toFixed(2);
+    valSynthPan.textContent = parseFloat(sliderSynthPan.value).toFixed(2);
+
+    audioEngine.setVideoVolume(parseFloat(sliderVideoVol.value));
+    audioEngine.setVolume(parseFloat(sliderSynthVol.value));
+    audioEngine.setVideoPan(parseFloat(sliderVideoPan.value));
+    audioEngine.setPan(parseFloat(sliderSynthPan.value));
+
+    currentVideoPan = parseFloat(sliderVideoPan.value);
+    currentSynthPan = parseFloat(sliderSynthPan.value);
+  };
+
+  const applyPreset = (presetName) => {
+    // Reset active states
+    presetLr.classList.remove("active");
+    presetMono.classList.remove("active");
+    presetVideo.classList.remove("active");
+    presetMidi.classList.remove("active");
+
+    if (presetName === 'lr') {
+      sliderVideoPan.value = -0.8;
+      sliderSynthPan.value = 0.8;
+      sliderVideoVol.value = 1.0;
+      sliderSynthVol.value = 1.0;
+      presetLr.classList.add("active");
+    } else if (presetName === 'mono') {
+      sliderVideoPan.value = 0;
+      sliderSynthPan.value = 0;
+      sliderVideoVol.value = 1.0;
+      sliderSynthVol.value = 1.0;
+      presetMono.classList.add("active");
+    } else if (presetName === 'video') {
+      sliderVideoVol.value = 1.0;
+      sliderSynthVol.value = 0.0;
+      sliderVideoPan.value = 0; // Center for mono
+      sliderSynthPan.value = 0;
+      presetVideo.classList.add("active");
+    } else if (presetName === 'midi') {
+      sliderVideoVol.value = 0.0;
+      sliderSynthVol.value = 1.0;
+      sliderVideoPan.value = 0;
+      sliderSynthPan.value = 0;
+      presetMidi.classList.add("active");
+    }
+
+    updateMixerUI();
+  };
+
+  presetLr.addEventListener("click", () => applyPreset('lr'));
+  presetMono.addEventListener("click", () => applyPreset('mono'));
+  presetVideo.addEventListener("click", () => applyPreset('video'));
+  presetMidi.addEventListener("click", () => applyPreset('midi'));
+
+  sliderVideoVol.addEventListener("input", updateMixerUI);
+  sliderSynthVol.addEventListener("input", updateMixerUI);
+  sliderVideoPan.addEventListener("input", updateMixerUI);
+  sliderSynthPan.addEventListener("input", updateMixerUI);
+
+  // Initial mixer setup
+  applyPreset('lr');
+
   // 動的 JSON ファイル読み込み処理
   function handleJsonFile(file) {
     const reader = new FileReader();
@@ -299,6 +384,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     videoEl.src = url;
     loadedFileBadge.textContent = file.name;
     statusLabel.textContent = `動画セット: ${file.name}`;
+
+    // Connect video to audio engine
+    audioEngine.panVideo(videoEl, currentVideoPan);
 
     videoEl.addEventListener("loadedmetadata", () => {
       if (videoEl.duration && !isNaN(videoEl.duration)) {
