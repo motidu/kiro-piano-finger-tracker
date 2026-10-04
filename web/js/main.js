@@ -128,36 +128,87 @@ document.addEventListener("DOMContentLoaded", async () => {
   calibBtn.addEventListener("click", () => {
     renderer.showCalibration = !renderer.showCalibration;
     calibBtn.classList.toggle("active", renderer.showCalibration);
+    if (!renderer.showCalibration) {
+      canvas.style.cursor = "default";
+    }
   });
 
-  // キャリブレーションピンのドラッグ操作
+  // キャリブレーションピンのドラッグ操作 (Modern Pointer Events)
   let activePin = null;
 
-  canvas.addEventListener("mousedown", (e) => {
+  canvas.addEventListener("pointerdown", (e) => {
     if (!renderer.showCalibration) return;
+    e.preventDefault();
+
     const rect = canvas.getBoundingClientRect();
-    const mx = (e.clientX - rect.left) / canvas.width;
-    const my = (e.clientY - rect.top) / canvas.height;
+    const px = e.clientX - rect.left;
+    const py = e.clientY - rect.top;
 
     for (const [key, pt] of Object.entries(perspective.points)) {
-      const dist = Math.hypot(pt.x - mx, pt.y - my);
-      if (dist < 0.05) {
+      const targetX = pt.x * rect.width;
+      const targetY = pt.y * rect.height;
+      const dist = Math.hypot(px - targetX, py - targetY);
+
+      if (dist <= 25) {
         activePin = key;
+        canvas.setPointerCapture(e.pointerId);
+        canvas.style.cursor = "grabbing";
         break;
       }
     }
   });
 
-  window.addEventListener("mousemove", (e) => {
-    if (!activePin) return;
+  canvas.addEventListener("pointermove", (e) => {
+    if (!renderer.showCalibration) {
+      canvas.style.cursor = "default";
+      return;
+    }
+
     const rect = canvas.getBoundingClientRect();
-    const mx = Math.max(0, Math.min(1, (e.clientX - rect.left) / canvas.width));
-    const my = Math.max(0, Math.min(1, (e.clientY - rect.top) / canvas.height));
+
+    if (!activePin) {
+      // ピンホバー判定（視覚的カーソルフィードバック）
+      const px = e.clientX - rect.left;
+      const py = e.clientY - rect.top;
+      let isHovering = false;
+
+      for (const [key, pt] of Object.entries(perspective.points)) {
+        const targetX = pt.x * rect.width;
+        const targetY = pt.y * rect.height;
+        const dist = Math.hypot(px - targetX, py - targetY);
+        if (dist <= 25) {
+          isHovering = true;
+          break;
+        }
+      }
+      canvas.style.cursor = isHovering ? "grab" : "default";
+      return;
+    }
+
+    // ピンのドラッグ移動
+    const mx = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const my = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
     perspective.setPoint(activePin, mx, my);
   });
 
-  window.addEventListener("mouseup", () => {
-    activePin = null;
+  canvas.addEventListener("pointerup", (e) => {
+    if (activePin) {
+      try {
+        canvas.releasePointerCapture(e.pointerId);
+      } catch (_) {}
+      activePin = null;
+      canvas.style.cursor = "grab";
+    }
+  });
+
+  canvas.addEventListener("pointercancel", (e) => {
+    if (activePin) {
+      try {
+        canvas.releasePointerCapture(e.pointerId);
+      } catch (_) {}
+      activePin = null;
+      canvas.style.cursor = "default";
+    }
   });
 
   // 動的 JSON ファイル読み込み処理
