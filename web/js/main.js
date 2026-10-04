@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const canvas = document.getElementById("viewer-canvas");
   const playBtn = document.getElementById("btn-play");
   const calibBtn = document.getElementById("btn-calib");
+  const btnToggleKeyboard = document.getElementById("btn-toggle-keyboard");
   const timeSlider = document.getElementById("time-slider");
   const timeLabel = document.getElementById("time-label");
   const statusLabel = document.getElementById("status-text");
@@ -155,6 +156,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       canvas.style.cursor = "default";
     }
   });
+
+  if (btnToggleKeyboard) {
+    btnToggleKeyboard.addEventListener("click", () => {
+      renderer.showKeyboard = !renderer.showKeyboard;
+      btnToggleKeyboard.classList.toggle("active", renderer.showKeyboard);
+    });
+  }
 
   // キャリブレーションピンのドラッグ操作 (Modern Pointer Events)
   let activePin = null;

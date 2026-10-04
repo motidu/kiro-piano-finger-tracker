@@ -10,6 +10,7 @@ export class Renderer {
     this.perspective = perspective;
     this.notes = notesData || [];
     this.showCalibration = true;
+    this.showKeyboard = true;
     this.leadTimeSec = 2.0; // ノートが落ちてくる予兆時間（秒）
 
     // Precompute keyboard geometry
@@ -35,7 +36,9 @@ export class Renderer {
     ctx.clearRect(0, 0, w, h);
 
     // 1. 鍵盤ベースラインを描画
-    this.drawKeyboard(w, h);
+    if (this.showKeyboard) {
+      this.drawKeyboard(w, h);
+    }
 
     // 2. 落ち物ノートの描画
     this.drawFallingNotes(currentTime, w, h);
@@ -50,8 +53,8 @@ export class Renderer {
     const ctx = this.ctx;
     const pFrontLeft = this.perspective.mapPoint(0, 0);
     const pFrontRight = this.perspective.mapPoint(1, 0);
-    const pBackRight = this.perspective.mapPoint(1, 0.35);
-    const pBackLeft = this.perspective.mapPoint(0, 0.35);
+    const pBackRight = this.perspective.mapPoint(1, 1.0);
+    const pBackLeft = this.perspective.mapPoint(0, 1.0);
 
     // 鍵盤エリアの背景
     ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
@@ -72,8 +75,8 @@ export class Renderer {
 
       const fl = this.perspective.mapPoint(uLeft, 0);
       const fr = this.perspective.mapPoint(uRight, 0);
-      const br = this.perspective.mapPoint(uRight, 0.35);
-      const bl = this.perspective.mapPoint(uLeft, 0.35);
+      const br = this.perspective.mapPoint(uRight, 1.0);
+      const bl = this.perspective.mapPoint(uLeft, 1.0);
 
       ctx.beginPath();
       ctx.moveTo(fl.x * w, fl.y * h);
@@ -90,7 +93,7 @@ export class Renderer {
     for (let i = 1; i < boundaries.length - 1; i++) {
       const u = boundaries[i];
       const front = this.perspective.mapPoint(u, 0);
-      const back = this.perspective.mapPoint(u, 0.35);
+      const back = this.perspective.mapPoint(u, 1.0);
       ctx.beginPath();
       ctx.moveTo(front.x * w, front.y * h);
       ctx.lineTo(back.x * w, back.y * h);
@@ -106,9 +109,9 @@ export class Renderer {
       const uLeft = uCenter - halfW;
       const uRight = uCenter + halfW;
 
-      // v range for black keys: 0.14 to 0.35 (back 60% of 0..0.35 strip)
-      const vFront = 0.14;
-      const vBack = 0.35;
+      // v range for black keys: 0.4 to 1.0 (covering back 60% of key depth)
+      const vFront = 0.4;
+      const vBack = 1.0;
 
       const fl = this.perspective.mapPoint(uLeft, vFront);
       const fr = this.perspective.mapPoint(uRight, vFront);
@@ -156,9 +159,9 @@ export class Renderer {
 
       // 奥行き v の計算 (0: 鍵盤上 〜 1: 最上部)
       // ノートの先端（着地予定地点）
-      const vFront = Math.max(0, 0.35 + ((n.start - currentTime) / this.leadTimeSec) * 0.65);
+      const vFront = Math.max(0, 1.0 + ((n.start - currentTime) / this.leadTimeSec) * 1.5);
       // ノートの末尾
-      const vBack = Math.min(1.0, 0.35 + ((n.end - currentTime) / this.leadTimeSec) * 0.65);
+      const vBack = Math.max(0, 1.0 + ((n.end - currentTime) / this.leadTimeSec) * 1.5);
 
       // Draw falling note bar as a quad (left edge and right edge lines)
       const pFrontL = this.perspective.mapPoint(uLeft, vFront);
@@ -166,9 +169,9 @@ export class Renderer {
       const pBackL = this.perspective.mapPoint(uLeft, vBack);
       const pBackR = this.perspective.mapPoint(uRight, vBack);
 
-      // Bar fill
+      // Bar fill (clean filled translucent bar, no outline stroke)
       ctx.fillStyle = color;
-      ctx.globalAlpha = 0.7;
+      ctx.globalAlpha = 0.75;
       ctx.beginPath();
       ctx.moveTo(pFrontL.x * w, pFrontL.y * h);
       ctx.lineTo(pFrontR.x * w, pFrontR.y * h);
@@ -178,21 +181,9 @@ export class Renderer {
       ctx.fill();
       ctx.globalAlpha = 1.0;
 
-      // Outline: black keys get slightly darker outline, white keys use hand color
-      const outlineColor = geom.isBlack ? "#1a1a2e" : color;
-      ctx.strokeStyle = outlineColor;
-      ctx.lineWidth = Math.max(2, 6 * (1 - vFront * 0.5));
-      ctx.beginPath();
-      ctx.moveTo(pFrontL.x * w, pFrontL.y * h);
-      ctx.lineTo(pFrontR.x * w, pFrontR.y * h);
-      ctx.lineTo(pBackR.x * w, pBackR.y * h);
-      ctx.lineTo(pBackL.x * w, pBackL.y * h);
-      ctx.closePath();
-      ctx.stroke();
-
       // 現在まさに打鍵中の場合：鍵盤上にヒットエフェクト & 指番号バッジを表示
       if (currentTime >= n.start && currentTime <= n.end) {
-        const hitPoint = this.perspective.mapPoint(uCenter, 0.15);
+        const hitPoint = this.perspective.mapPoint(uCenter, 0.5);
 
         // 打鍵発光エフェクト
         ctx.fillStyle = color;
