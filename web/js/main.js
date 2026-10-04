@@ -2,6 +2,7 @@
 import { PerspectiveMapper } from "./perspective.js";
 import { AudioEngine } from "./audio_engine.js";
 import { Renderer } from "./renderer.js";
+import { parseMidiArrayBuffer } from "./midi_parser.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
   const canvas = document.getElementById("viewer-canvas");
@@ -12,8 +13,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   const statusLabel = document.getElementById("status-text");
 
   const inputLoadJson = document.getElementById("input-load-json");
+  const inputLoadMidi = document.getElementById("input-load-midi");
   const inputLoadVideo = document.getElementById("input-load-video");
   const btnLoadJson = document.getElementById("btn-load-json");
+  const btnLoadMidi = document.getElementById("btn-load-midi");
   const btnLoadVideo = document.getElementById("btn-load-video");
   const loadedFileBadge = document.getElementById("loaded-file-badge");
   const dropOverlay = document.getElementById("drop-overlay");
@@ -244,6 +247,37 @@ document.addEventListener("DOMContentLoaded", async () => {
     reader.readAsText(file);
   }
 
+  // 動的 MIDI ファイル読み込み処理
+  function handleMidiFile(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const parsed = parseMidiArrayBuffer(e.target.result);
+        if (!parsed.notes || parsed.notes.length === 0) {
+          statusLabel.textContent = "MIDI解析警告: ノートが検出されませんでした";
+          return;
+        }
+        notesData = parsed.notes;
+        renderer.notes = notesData;
+
+        duration = parsed.duration || 12.0;
+        timeSlider.max = duration;
+        currentTime = 0;
+        playedNoteIndices.clear();
+        timeSlider.value = 0;
+        timeLabel.textContent = `0.0s / ${duration.toFixed(1)}s`;
+        statusLabel.textContent = `MIDI読込完了: ${notesData.length} ノート`;
+        loadedFileBadge.textContent = file.name;
+
+        if (videoEl) videoEl.currentTime = 0;
+      } catch (err) {
+        statusLabel.textContent = `MIDI解析エラー: ${err.message}`;
+        console.error("MIDI parse error:", err);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
   // 動的 動画ファイル読み込み処理
   function handleVideoFile(file) {
     const url = URL.createObjectURL(file);
@@ -284,12 +318,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     inputLoadJson.click();
   });
 
+  btnLoadMidi.addEventListener("click", () => {
+    inputLoadMidi.click();
+  });
+
   btnLoadVideo.addEventListener("click", () => {
     inputLoadVideo.click();
   });
 
   inputLoadJson.addEventListener("change", (e) => {
     if (e.target.files[0]) handleJsonFile(e.target.files[0]);
+    e.target.value = "";
+  });
+
+  inputLoadMidi.addEventListener("change", (e) => {
+    if (e.target.files[0]) handleMidiFile(e.target.files[0]);
     e.target.value = "";
   });
 
@@ -318,6 +361,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       for (const file of files) {
         if (file.name.endsWith(".json")) {
           handleJsonFile(file);
+        } else if (file.name.match(/\.(mid|midi)$/i)) {
+          handleMidiFile(file);
         } else if (file.type.startsWith("video/") || file.name.match(/\.(mp4|webm|mov|mkv)$/i)) {
           handleVideoFile(file);
         }

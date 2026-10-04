@@ -23,6 +23,8 @@
       <div class="controls-row">
         <input type="file" id="input-load-json" accept=".json" style="display:none">
         <button id="btn-load-json" class="btn-tool" title="Load custom notes JSON">📁 JSON読込</button>
+        <input type="file" id="input-load-midi" accept=".mid,.midi" style="display:none">
+        <button id="btn-load-midi" class="btn-tool" title="Load Standard MIDI File (.mid)">🎹 MIDI読込</button>
         <input type="file" id="input-load-video" accept="video/*" style="display:none">
         <button id="btn-load-video" class="btn-tool" title="Load background video MP4/WebM">🎬 動画読込</button>
       </div>
@@ -46,7 +48,7 @@
   <div id="drop-overlay">
     <div class="drop-content">
       <span class="drop-icon">📂</span>
-      <p>JSON または 動画（MP4/WebM）をここへドロップ</p>
+      <p>JSON / MIDI (.mid) / 動画 をここへドロップ</p>
     </div>
   </div>
 </body>
